@@ -12,8 +12,8 @@ class App extends React.Component {
         super(props);
 
         const margin = {top: 100, right: 100, bottom: 100, left: 100},
-                width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right,
-                height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
+                width = Math.min(550, window.innerWidth - 10) - margin.left - margin.right,
+                height = Math.min(450, window.innerHeight - margin.top - margin.bottom - 20);
                     
         this.radarChartOptions = {
               w: width,
@@ -22,6 +22,7 @@ class App extends React.Component {
               maxValue: 0.5,
               levels: 5,
               roundStrokes: true,
+              legendId: 'radar-chart-key'
              // color: color
         };
     }
@@ -29,9 +30,12 @@ class App extends React.Component {
     render() {
         return (
           <div className='container-fluid'>
-            <div className={classnames('radarchart-conainer', 'col-sm-12', 'col-md-8')}>
+            <div className={classnames('radarchart-conainer', 'col-sm-12', 'col-md-6')}>
               <RadarChart id='.radarchart-conainer' data={this.props.companyData} 
                 options={this.radarChartOptions} categories={this.props.categories} userData={this.props.userData}/>
+            </div>
+            <div className={classnames('col-md-2', 'chart-key')}>
+
             </div>
             <div className={classnames('col-md-4', 'myBox', 'container-fluid')}>
               <InputContainer categories={this.props.categories} 

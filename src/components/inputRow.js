@@ -27,7 +27,7 @@ export default class InputRow extends Component {
                       value={this.props.userValue} 
                       onChange={this.handleChange.bind(this)}
                       step="1"/>
-                    <div>Value: {this.props.userValue}</div>
+                    <div className='input-value'>Value: {this.props.userValue}</div>
                 </div>
             );
     }

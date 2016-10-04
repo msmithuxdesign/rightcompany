@@ -14,32 +14,47 @@ export default class RadarChart extends React.Component {
         this.radarChart = null;
 
         this.cfg = {
-             w: 600,                //Width of the circle
-             h: 600,                //Height of the circle
-             margin: {top: 20, right: 20, bottom: 20, left: 20}, //The margins of the SVG
+             w: 500,                //Width of the circle
+             h: 500,                //Height of the circle
+             margin: {top: 70, right: 90, bottom: 70, left: 90}, //The margins of the SVG
              levels: 3,             //How many levels or inner circles should there be drawn
              maxValue: 0,           //What is the value that the biggest circle will represent
              labelFactor: 1.25,     //How much farther than the radius of the outer circle should the labels be placed
              wrapWidth: 60,         //The number of pixels after which a label needs to be given a new line
-             opacityArea: 0.35,     //The opacity of the area of the blob
+             opacityArea: 0.15,     //The opacity of the area of the blob
              dotRadius: 4,          //The size of the colored circles of each blog
              opacityCircles: 0.1,   //The opacity of the circles of each blob
              strokeWidth: 2,        //The width of the stroke around each blob
-             roundStrokes: false,   //If true the area and stroke will follow a round path (cardinal-closed)
+             roundStrokes: true,   //If true the area and stroke will follow a round path (cardinal-closed)
              color: d3.scale.category10(),  //d3.scaleOrdinal(d3.schemeCategory10)  //Color function
              userColor: "FFD70D"
         };
         let dataArray = [];
         _.forOwn(this.props.data, (va, ke)=> {
-            let t = [];
-            dataArray.push(t);
-            _.forOwn(va, (v, k)=>{
-                t.push( _.merge(v,{axis: k, company: ke}));
-            });
+            if(ke !== '[object Object]') {
+                let t = [];
+                dataArray.push(t);
+                _.forOwn(va, (v, k)=>{
+                    t.push( _.merge(v,{axis: k, company: ke}));
+                }); 
+            }
+            
         }); 
         this.normalizedData = dataArray;
-        console.log('noralizedData....');
-        console.log(this.normalizedData);
+    }
+
+    _createCircleId(data) {
+        console.log('_createCircleId...');
+        console.log(data);
+        //console.log(data);
+        let radarId = '';
+        if(typeof data.company ==='undefined')
+            radarId = 'userDataBlob';
+        else{
+            radarId = data.company.replace(new RegExp(' ', 'g'), '_');    
+        }
+        console.log(radarId);
+        return radarId;
     }
 
     
@@ -80,14 +95,14 @@ export default class RadarChart extends React.Component {
     }
 
     createGlow(g) {
-        let filter = g.append('defs').append('filter').attr('id','glow'),
-            feGaussianBlur = filter.append('feGaussianBlur').attr('stdDeviation','2.5').attr('result','coloredBlur'),
-            feMerge = filter.append('feMerge'),
-            feMergeNode_1 = feMerge.append('feMergeNode').attr('in','coloredBlur'),
-            feMergeNode_2 = feMerge.append('feMergeNode').attr('in','SourceGraphic');
-        return filter;
+        let filter = 
+            g.append('defs').append('filter').attr('id','glow'),
+                feGaussianBlur = filter.append('feGaussianBlur').attr('stdDeviation','2.5').attr('result','coloredBlur'),
+                feMerge = filter.append('feMerge'),
+                //feMergeNode_1 = feMerge.append('feMergeNode').attr('in','coloredBlur');
+                feMergeNode_2 = feMerge.append('feMergeNode').attr('in','SourceGraphic');
     }
-
+    
     drawBackGroundCircles(axGrid, cfg, radius, ) {
         //Draw the background circles
         axGrid.selectAll(".levels")
@@ -97,7 +112,7 @@ export default class RadarChart extends React.Component {
             .attr("class", "gridCircle")
             .attr("r", function(d, i){return radius/cfg.levels*d;})
             .style("fill", "#CDCDCD")
-            .style("stroke", "#CDCDCD")
+            .style("stroke", "#645F5F")
             .style("fill-opacity", cfg.opacityCircles)
             .style("filter" , "url(#glow)");
 
@@ -112,8 +127,7 @@ export default class RadarChart extends React.Component {
            .attr("x", 4)
            .attr("y", function(d){return -d*radius/cfg.levels;})
            .attr("dy", "0.4em")
-           .style("font-size", "10px")
-           .attr("fill", "#737373")
+           .attr("fill", "#000000")
            .text(function(d,i) { return format(maxValue * d/cfg.levels); });
     }
 
@@ -121,8 +135,6 @@ export default class RadarChart extends React.Component {
         /////////////////////////////////////////////////////////
         //////////////////// Draw the axes //////////////////////
         /////////////////////////////////////////////////////////
-        //console.log('maxValue: '+maxValue);
-        //console.log('angleSlice: '+angleSlice);
 
         //Create the straight lines radiating outward from the center
         const axis = axGrid.selectAll(".axis")
@@ -142,13 +154,14 @@ export default class RadarChart extends React.Component {
                 const val = rScale(maxValue*1.1) * Math.sin(angleSlice*i - Math.PI/2);
                 return isNaN(val) ? 0 : val; })
             .attr("class", "line")
-            .style("stroke", "white")
+            .style("stroke", "darkred")
+            .style("opacity", "0.35")
             .style("stroke-width", "2px");
 
         //Append the labels at each axis
         axis.append("text")
             .attr("class", "legend")
-            .style("font-size", "11px")
+            //.style("font-size", "11px")
             .attr("text-anchor", "middle")
             .attr("dy", "0.35em")
             .attr("x", function(d, i){ 
@@ -166,8 +179,6 @@ export default class RadarChart extends React.Component {
         _.forOwn(userData, (val, key) => {
             tmp.push({axis: key, value: val});
         });
-        //console.log('tmp.....');
-        //console.log(tmp);
         return [tmp];
     }
 
@@ -179,12 +190,17 @@ export default class RadarChart extends React.Component {
             .data(userDat)
             .enter().append("g")
             .attr("class", "userWrapper");
-        //console.log('color value');
-        //console.log(cfg.color(1));
-        this._drawRadarCircles(svg, cfg, rScale, angleSlice, g, userDat, this.userWrapper);
+        this._drawRadarCircles(svg, cfg, rScale, angleSlice, g, userDat, this.userWrapper, this._createCircleId, 'userDataBlob');
+
+        d3.select("#userDataBlob")
+            .style("fill-opacity", (cfg.opacityArea * 4))
+            .transition().duration(800) 
+            .style("fill-opacity", cfg.opacityArea);  
     }
 
-    _drawRadarCircles(svg, cfg, rScale, angleSlice, gElement, radarData, blobWrapper) {
+   
+
+    _drawRadarCircles(svg, cfg, rScale, angleSlice, gElement, radarData, blobWrapper, createCircleId, id='') {
         /////////////////////////////////////////////////////////
         ///////////// Draw the radar chart blobs ////////////////
         /////////////////////////////////////////////////////////
@@ -196,24 +212,36 @@ export default class RadarChart extends React.Component {
         if(cfg.roundStrokes) {
             radarLine.interpolate("cardinal-closed");
         }
+
+        if(id === '') {
+            blobWrapper
+                .append("path")
+                .attr("class", "radarArea")
+                .attr('id', (d, i)=> { return createCircleId(d[0]);})
+                .attr("d", (d,i) => { return radarLine(d); })
+                .style("fill", (d,i) => {return radarData.length > 1 ? cfg.color(i) : cfg.userColor; })
+                .style("fill-opacity", cfg.opacityArea);
+        }else {
+            blobWrapper
+                .append("path")
+                .attr("class", "radarArea")
+                .attr("id", id)
+                .attr("d", (d,i) => { return radarLine(d); })
+                .style("fill", (d,i) => {return radarData.length > 1 ? cfg.color(i) : cfg.userColor; })
+                .style("fill-opacity", cfg.opacityArea);
+        }
         
         //Append the backgrounds    
         blobWrapper
-            .append("path")
-            .attr("class", "radarArea")
-            .attr("d", (d,i) => { return radarLine(d); })
-            .style("fill", (d,i) => {return radarData.length > 1 ? cfg.color(i) : cfg.userColor; })
-            .style("fill-opacity", cfg.opacityArea)
-            .on('mouseover', (d,i) => {
-                //Dim all blobs
-                console.log('mouseover......');
-                d3.selectAll('.radarArea')
+            .on('mouseover', function(d,i) {
+                //console.log(d);
+                let id = '#' + createCircleId(d[0]);
+                d3.select(id)
                     .transition().duration(200)
-                    .style("fill-opacity", 0.1); 
-                //Bring back the hovered over blob
-                d3.select(this)
+                    .style("fill-opacity", 0.05); 
+                d3.select(id)
                     .transition().duration(200)
-                    .style("fill-opacity", 0.7);    
+                    .style("fill-opacity", (cfg.opacityArea * 3));    
             })
             .on('mouseout', () => {
                 //Bring back all blobs
@@ -227,7 +255,7 @@ export default class RadarChart extends React.Component {
             .attr("class", "radarStroke")
             .attr("d", (d,i) => { return radarLine(d); })
             .style("stroke-width", this.cfg.strokeWidth + "px")
-            .style("stroke", (d,i) => { return cfg.color(i); })
+            .style("stroke", (d,i) => {return radarData.length > 1 ? cfg.color(i) : cfg.userColor; })
             .style("fill", "none")
             .style("filter" , "url(#glow)");        
     
@@ -244,11 +272,11 @@ export default class RadarChart extends React.Component {
                 const val = rScale(d.value) * Math.sin(angleSlice*i - Math.PI/2);
                 return isNaN(val) ? 0 : val; })
             .style("fill", (d,i,j) => { return cfg.color(j); })
-            .style("fill-opacity", 0.8);
+            .style("fill-opacity", 0.8); 
     }
 
     drawCircleBlobs(svg, cfg, rScale, angleSlice, gElement) {
-        this._drawRadarCircles(svg, cfg, rScale, angleSlice, gElement, this.normalizedData, this.blobWrapper);
+        this._drawRadarCircles(svg, cfg, rScale, angleSlice, gElement, this.normalizedData, this.blobWrapper, this._createCircleId);
     }
 
     addToolTips(rScale, angleSlice, gElement, format, tooltip) {
@@ -296,6 +324,106 @@ export default class RadarChart extends React.Component {
             });
     }
 
+    _drawLegendItems(legendSvg, legendKeys, colorFunc, idFunc) {
+        legendSvg.selectAll('circle-legend')
+            .data(legendKeys)
+            .enter()
+            .append('circle')
+            .attr('class', 'circle-legend')
+            .attr('id', function(d,i){return idFunc(d)+'Key';})
+            .attr('cx', 25)
+            .attr('cy', function(d, i){return i * 35 + 30;})
+            .attr('r', 15)
+            .on('mouseover', function(d, i){
+                //console.log(idFunc(d)+'Key');
+                d3.selectAll('.circle-legend')
+                    .style('fill-opacity', 0.05) 
+                    .style('stroke-opacity', 0.45);
+
+                d3.select(this)
+                    .style('fill-opacity', 0.3) 
+                    .style('stroke-opacity', 1);
+
+                d3.select('#'+idFunc(d))
+                    .transition().duration(200)
+                    .style("fill-opacity", (0.15 * 3));   
+
+            })
+            .on('mouseout', function(d, i){
+                d3.selectAll('.circle-legend')
+                    .style('fill-opacity', 0.3) 
+                    .style('stroke-opacity', 1);
+
+                d3.select('#'+idFunc(d))
+                    .style("fill-opacity", 0.15);   
+            })
+            .style('stroke', function(d,i){return colorFunc(i);})
+            .style('stroke-width', 3)
+            .style('fill', function(d,i){return colorFunc(i);})
+            .style('fill-opacity', .3);
+
+        legendSvg.selectAll('text')
+            .data(legendKeys)
+            .enter()
+            .append('text')
+            .attr('x', 52)
+            .attr('y', function(d, i){ return i * 35 + 35;})
+            .text(function(d, i){return legendKeys[i]; });
+    }
+
+    _drawLegend(legendId, cfg) {
+        const legendContainer = d3.select('.chart-key').append('svg')
+            .attr('width', 200)
+            .attr('height', 240);
+        let legendKeys = [];
+        this.normalizedData.forEach((a) => {
+            if(a[0].company && typeof a[0].company === 'string')
+                legendKeys.push( a[0].company );
+        });
+
+        this._drawLegendItems(legendContainer, legendKeys, cfg.color, (d)=>{ return d.replace(new RegExp(' ', 'g'), '_');});
+        legendContainer.selectAll('user-circle')
+            .data(['Your Profile'])
+            .enter()
+            .append('circle')
+            .attr('id', 'userDataBlobKey')
+            .attr('cx', 25)
+            .attr('cy', (d, i) => {return (this.normalizedData.length + 1) * 35 - 3;})
+            .attr('r', 15)
+            .style('stroke', function(d,i){return cfg.userColor;})
+            .style('stroke-width', 3)
+            .style('fill', function(d,i){return cfg.userColor;})
+            .style('fill-opacity', .3)
+            .on('mouseover', function(d,i){
+                d3.selectAll('.circle-legend')
+                    .style('fill-opacity', 0.05) 
+                    .style('stroke-opacity', 0.45);
+
+                d3.select('#userDataBlob')
+                    .transition().duration(200)
+                    .style("fill-opacity", (0.15 * 3));    
+            })
+            .on('mouseout', function(d,i) {
+                d3.selectAll('.circle-legend')
+                    .style('fill-opacity', 0.3) 
+                    .style('stroke-opacity', 1);
+
+                d3.select('#userDataBlob')
+                    .transition().duration(200)
+                    .style("fill-opacity", 0.15);    
+
+            });
+
+        legendContainer.selectAll('user-text')
+            .data(['Your Profile'])
+            .enter()
+            .append('text')
+            .attr('x', 52)
+            .attr('y', (d, i) => { return (this.normalizedData.length + 1)* 35;})
+            .text(function(d, i){return 'Your Profile'; });
+        
+    }
+
     renderGraph() {
         //Put all of the options into a variable called this.cfg
         if(this.props != null && 'undefined' !== typeof this.props.options){
@@ -336,14 +464,12 @@ export default class RadarChart extends React.Component {
         this.g = this.svg.append("g")
                 .attr("transform", "translate(" + (this.cfg.w/2 + this.cfg.margin.left) + "," + (this.cfg.h/2 + this.cfg.margin.top) + ")");
 
-        this.filter = this.createGlow(this.g);
+        this.createGlow(this.g);
 
         //Wrapper for the grid & axes
         this.axisGrid = this.g.append("g").attr("class", "axisWrapper");
         this.drawBackGroundCircles(this.axisGrid, this.cfg, this.radius);
-        this.drawAxisText(this.axisGrid, this.cfg, this.radius, this.maxValue, this.format);
         this.drawAxes(this.axisGrid, this.cfg, this.allAxis, this.rScale, this.angleSlice, this.maxValue, this.wrapHelper);
-        //let blobWrapper = this.drawCircleBlobs(this.svg, this.cfg, this.rScale, this.angleSlice, this.g);
         
         //Create a wrapper for the blobs    
         this.g.selectAll(".radarWrapper").remove();
@@ -355,11 +481,13 @@ export default class RadarChart extends React.Component {
 
         this.drawCircleBlobs(this.svg, this.cfg, this.rScale, this.angleSlice, this.g, this.blobwrapper);
         this.drawUserData(this.svg, this.cfg, this.rScale, this.angleSlice);
+        this.drawBackGroundCircles(this.axisGrid, this.cfg, this.radius);
+        this.drawAxisText(this.axisGrid, this.cfg, this.radius, this.maxValue, this.format);
         this.tooltip = this.g.append("text")
                 .attr("class", "tooltip")
                 .text('Hello World')
                 .style("opacity", 0);
-
+        this._drawLegend(this.cfg.legendId, this.cfg);
         this.addToolTips(this.rScale, this.angleSlice, this.g, this.format, this.tooltip);
     }
 
@@ -369,7 +497,6 @@ export default class RadarChart extends React.Component {
     }
 
     componentDidUpdate() {
-        // console.log('Update called.......');
         this.drawUserData(this.svg, this.cfg, this.rScale, this.angleSlice);
     }
 
