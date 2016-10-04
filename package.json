@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server",
-    "build": "webpack",
+    "build": "webpack && uglifyjs ./build/bundle.js -c -m -o ./build/bundle.min.js --source-map ./build/bundle.min.js.map",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -29,6 +29,7 @@
     "redux-devtools-log-monitor": "^1.0.11",
     "sass-loader": "^4.0.2",
     "style-loader": "^0.13.1",
+    "uglify-js": "^2.7.3",
     "webpack": "^1.13.2",
     "webpack-dev-server": "^1.15.1"
   },

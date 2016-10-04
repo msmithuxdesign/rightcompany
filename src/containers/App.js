@@ -43,7 +43,7 @@ class App extends React.Component {
                 onValueChanged={this.props.onValueChanged}
                 userData={this.props.userData} />
             </div>
-            <DevTools />
+          
           </div>
     );
   }

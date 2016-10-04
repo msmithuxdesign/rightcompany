@@ -168,6 +168,22 @@ text.legend {
   font-size: 14px;
 }
 
+.protfolio-button{
+  margin: auto;
+  width: 35%;
+}
+.btn-xl{
+  color: #fff;
+  background-color: #fed136;
+  border-color: #fed136;
+  font-family: Catamaran,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  text-transform: uppercase;
+  font-weight: 700;
+  border-radius: 3px;
+  font-size: 18px;
+  padding: 20px 40px;
+}
+
 @media screen and (max-width: 600px) {
     .headline {
     font-family: 'Lalezar', Serif;
